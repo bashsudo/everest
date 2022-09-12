@@ -1,29 +1,36 @@
 #!/bin/bash
 
 ###########################################################
-# HDPARM Hard Drive 
-#
+# Everest: a modular hdparm wrapper for power management
+# Written by Eiza Stanford / "Charky Barky" / "Bash Sudo"
+# core.sh: the primary script of the entire project
+###########################################################
+
+###########################################################
+# Parameters (all are required, cannot be blank):
+# $1 / 1st option: a personal memo / reason for the file execution (stored in the logfile)
+# $2 / 2nd option: the serial number for the hard drive
+# $3 / 3rd option: the value for the -S flag of hdparm (standby timeout); this cannot be skipped with "-1"
+# $4 / 4th option: the value for the -B option of hdparm (APM); specify "-1" to skip this parameter
+# $5 / 5th option: the value for the -M option of hdparm (AAM); specify "-1" to skip this parameter
 ###########################################################
 
 
-# 03/11/2022
 
-# NOTE: I was paranoid and specified absolute paths for most builtin Linux utilities (i.e. gawk), even though that would only be necessary for non-builtins like "smartctl" and "hdparm"
+###########################################################
+# Parameters
+###########################################################
 
-#	$1 = reason for file execution (can be literally anything, just a label for logging)
-#	$2 = the name of the block file, /dev/sdX
-#	$3 = the value for -S
-#	$4 = the value for -B
-#	$5 = the value for -M
-
-# = = = = = =	PARAMETERS		= = = = = =
 label=$1
 serial=$2
 optionS=$3
 optionB=$4
 optionM=$5
 
-# = = = = = =	CRITICAL VARIABLES	= = = = = =
+###########################################################
+# Important Variables
+###########################################################
+
 blockFile=""
 
 workingPath="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -31,7 +38,10 @@ logPath="$workingPath/log.txt"
 
 divider="-------------------------------------------"
 
-# = = = = = =	CRITICAL LOG FUNCS	= = = = = =
+###########################################################
+# Logging Functions
+###########################################################
+
 function logNewLine {
 	echo $'\n' >> $logPath
 }
@@ -51,7 +61,10 @@ function logChunkEventDetails {
 	logRecord "    DATE: $(date)"
 }
 
-# = = = = = =	SERIAL TO BLOCK		= = = = = =
+###########################################################
+# Serial Number to Device Block Function
+###########################################################
+
 function SerialToBlock {
 	line="$(/bin/lsblk -o name,serial | grep $serial)"
 	if [[ -n "$line" ]]; then #CONDITION: IF THE LINE IS NOT BLANK
@@ -65,10 +78,19 @@ function SerialToBlock {
 	fi
 }
 
-# >>> >>> >>> IMMEDIATELY CHECK TO SEE IF SERIAL IS VALID - OTHERWISE WHOLE PROGRAM CANNOT CONTINUE
+###########################################################
+# Important Step:
+# immediately chcek to see if the serial number is valid; otherwise the program
+# cannot continue
+###########################################################
+
 SerialToBlock
 
-# = = = = = =	HDPARM		= = = = = =
+
+###########################################################
+# hdparm Functions and Output Variable
+###########################################################
+
 hdparmOutput=""
 
 function hdparmExecute {
@@ -100,16 +122,23 @@ function logChunkHdparm {
 	logRecord "$divider"
 }
 
-# = = = = = =	SMARTCTL	= = = = = =
+###########################################################
+# smartctl Functions and Output Variable
+###########################################################
 
+# Run Smartctl and Gather Basic Information Output
 smartctlInfoOutput="$(/sbin/smartctl -a $blockFile 2>&1)"
-
-# WARNING, I AM NESTING DOUBLE QUOTES BELOW, THIS MAY OR MAY NOT BREAK UNDER SPECIFIC CONDITIONS!
-# HOWEVER, SINCE SMARTCTL OUTPUT DOES NOT INVOLVE WEIRD CHARACTERS, I WILL KEEP THIS IMPLEMENTATION
 
 function smartctlSearch {
 	echo "$(echo "$smartctlInfoOutput" | grep "$1")"
 }
+
+###########################################################
+# Gathering and Logging Information of Hard Drive:
+# uses smartctlSearch to grep the smartctl -i output for
+# important information and SMART details for the specified
+# hard drive
+###########################################################
 
 driveFamily="$(smartctlSearch "Model Family:")"
 driveModel="$(smartctlSearch "Device Model:")"
@@ -133,7 +162,9 @@ function logChunkSmartctl {
 	logRecord "    $driveRetractCount"
 }
 
-# = = = = = =	RECORD LOGS	= = = = = =
+###########################################################
+# The "Main" Execution of the Script
+###########################################################
 logChunkHeader
 logChunkEventDetails
 logChunkSmartctl

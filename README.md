@@ -1,22 +1,19 @@
-# Name
-Everest
+# Everest: a wrapper for hdparm and smartctl
 
 # What is the Program?
-* A wrapper of HDPARM that focuses on adjusting the Automatic Acoustic Management (AAM), Standby Timeout, and the Advanced Power Management (APM) parameters of hard drives.
-* Main features:
-    * modular design (a few "central" scripts that interface with custom user scripts)
-        * the centralized script (core.sh) provides many, many helper functions
-        * yet, since the user writes external, individual scripts that communicate with the core.sh...
-            * the external scripts are tiny (all helper functions in core.sh)
-            * the external scripts can be called separately by crontab at different times
-    * highly readible log file
-        * many logging-related functions in the core.sh that simplify the process of logging and allow for more readibility
-    * captures the stdout AND stderr from hdparm (ensuring that any hdparm errors are recorded and visible later)
-    * hard drives are referred by their serial numbers, not arbitrary block devices
-        * (built-in serial number to block device conversion)
-        * normally the block devices for hard drives (e.g. /dev/sda) in linux are not permanently assigned; they may change over time as devices are plugged in and unplugged
-        * one of the least ambiguous ways to refer to a specific hard drive is to use its serial number
-* I did NOT write nor own HDPARM
+Everest is a wrapper of `hdparm` and `smartctl` that focuses on adjusting the Automatic Acoustic Management (AAM), Standby Timeout, and the Advanced Power Management (APM) parameters of hard drives.
+The utility `hdparm` actually modifies the settings of hard drives, while `smartctl` is used for merely gathering the SMART information of the hard drives (without actually running SMART tests).
+
+Some of Everest's main features include:
+* A modular design that maximizes utility and minimizes stress for the user.
+    * The main script `core.sh` performs all of the work in executing hdparm and smartctl and saving their output and other important information into a log file.
+    * All the user has to do is call `core.sh` either in the shell, in another script, or in a cronjob.
+* A highly readible log file.
+    * Captures the STDOUT and STDERR from hdparm, aiding in troubleshooting and debugging hdparm options after running.
+* References hard drives by their serial numbers, NOT by their Linux block devices.
+    * Normally block devices for hard drives (e.g. `/dev/sdX`) are NOT permamently assigned; they change as devices are plugged in and unplugged.
+    * Thus, one of the least ambiguous ways to reference a hard drive is to use its serial number.
+
 
 AAM = -M
 Standby = -S
