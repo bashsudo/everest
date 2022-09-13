@@ -1,10 +1,13 @@
 # Everest: a wrapper for hdparm and smartctl
 
+<img src="./.readme/log_file_sample_2.png" width="512"/>
+
 # What is the Program?
 Everest is a wrapper of `hdparm` and `smartctl` that focuses on adjusting the Automatic Acoustic Management (AAM), Standby Timeout, and the Advanced Power Management (APM) parameters of hard drives.
 The utility `hdparm` actually modifies the settings of hard drives, while `smartctl` is used for merely gathering the SMART information of the hard drives (without actually running SMART tests).
 
 Some of Everest's main features include:
+
 * A modular design that maximizes utility and minimizes stress for the user.
     * The main script `core.sh` performs all of the work in executing hdparm and smartctl and saving their output and other important information into a log file.
     * All the user has to do is call `core.sh` either in the shell, in another script, or in a cronjob.
@@ -15,48 +18,30 @@ Some of Everest's main features include:
     * Thus, one of the least ambiguous ways to reference a hard drive is to use its serial number.
 
 
-AAM = -M
-Standby = -S
-APM = -B
-
 # Motivation for the Program
-* began on March 11, 2022
-* Whenever I would run HDPARM on my hard drives on my file server, the power-related behavior of the hard drives would not change
-    * my file server has multiple brands of hard drives and different models, strange
-* in an effort to troubleshoot that issue, I wrote this system
-* it evolved to become a modular, flexible model and implementation of BASH scripts that may inspire BASH projects I may have in the future
+On March 11, 2022, I officially began the project as a means to solve a troublesome issue I had with hdparm and my file server. When running hdparm in my shell to change the power management behavior of my hard drives, the changes would either not persist after a reboot or have any immediate effect whatsoever. This occured across multiple hard drives with different brands, models, and specs. I wrote this system to closely log and monitor the hard drives after running hdparm commands to further explore the issue.
 
 # Contents of this Repository
-* core.sh
-* begin.sh
+* `core.sh`
+* `preface.sh`
 * template for "execute all"
 * template for "external script"
 
 # Usage and Implementation:
 
 ## Simplest Usage
-* having the system immediately use HDPARM to configure your hard drives, is as simple as running the "core.sh" script directly with these parameters:
-    * 1st parameter: label          (required) a small memo or message to distinguish this invocation of core.sh from other invocations in the logs
-    * 2nd parameter: serial         (required) the serial number of the hard drive
-    * 3rd parameter: "option S"     (required) sets the Standby Timeout value in HDPARM (same as -S option), this cannot be ignored with -1
-    * 4th parameter: "option B"     (required) sets the APM value in HDPARM, use "-1" to skip this parameter and do nothing in terms of APM
-    * 5th parameter: "option M"     (required) sets the AAM value in HDPARM, use "-1" to skip this parameter and do nothing in terms of AAM
+To immediately use the system and call hdparm to tweak your hard drives, simply run `core.sh` with these parameters:
 
-(INSERT IMAGE)
+* **1st parameter**: `label`        (required) A small memo or message to distinguish this invocation of core.sh from other invocations in the logs.
+* **2nd parameter**: `serial`         (required) The serial number of the hard drive.
+* **3rd parameter**: `optionS`      (required) Sets the Standby Timeout value in HDPARM (same as -S option), this cannot be ignored with `-1`.
+* **4th parameter**: `optionB`      (required) Sets the APM value in HDPARM, use `-1` to skip this parameter and do nothing in terms of APM.
+* **5th parameter**: `optionM`      (required) sets the AAM value in HDPARM, use `-1` to skip this parameter and do nothing in terms of AAM.
 
 ## Long-Term Implementation
 
 ### Running core.sh in another script file
-* this is recommended if you are expecting to execute core.sh with specific parameters many times in the present and future
-* also ideal for crontab
-* use the provided template for writing scripts
-
-(INSERT IMAGE)
+Running `core.sh` from another "external" script file is recommended if you are expecting to execute core.sh with specific parameters many times in the present and future. This is also ideal for crontab or automated execution. **A template script for running core.sh is provided in the repository as ** `template-external_script.sh`.
 
 ### Writing an "execute all" script file
-* if you have multiple hard drives that you want to use simultaneously with this system, then it is recommended
-    * this is not much more than having a basic BASH script running core.sh multiple times (or the external user script files)
-
-* use or modify the provided template
-* things to note about the "execute all" script file (or running core.sh multiple times in one go):
-    * before running core.sh (or other external scripts) within the script file, it is recommended to run the "begin"
+If you would like to use this system with multiple hard drives, it is recommended to have a script that executes multiple external scripts or calls `core.sh` multiple times. Although this may seem like an extremely obvious approach, there is a specific, recommended approach to this: call `preface.sh` at the beginning of your script to append a special header to the log file explaining that multiple `core.sh` calls will be made (results in a more readible log file). **A template script for executing** `core.sh` **multiple times is provided in the repository as ** `template-external_script.sh`.
